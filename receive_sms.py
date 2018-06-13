@@ -3,6 +3,8 @@
 import os
 from flask import Flask, request, redirect
 from twilio.twiml.messaging_response import MessagingResponse
+import contribution_database as database
+import multiprocessing as mp
 
 app = Flask(__name__)
 
@@ -10,6 +12,7 @@ app = Flask(__name__)
 def incoming_sms():
     # Get the message the user sent our Twilio number
     body = request.values.get('Body', None).upper()
+    phone_number = request.values.get('From', None)
 
     # Start our TwiML response
     resp = MessagingResponse()
@@ -18,13 +21,13 @@ def incoming_sms():
 
     if is_valid:
         resp.message("Thanks for contributing to CrowdHydrology research and being a citizen-scientist!")
-        # Maybe randomize a funny science joke after
+        # TODO: Maybe randomize a funny science joke after
 
         print("Recieved a valid sms")
-        print("\tSMS data:\n\t\tStation: ", station, "\n\t\tWater height: ", water_height, ")
+        print("\tSMS data:\n\t\tStation: ", station, "\n\t\tWater height: ", water_height)
 
-        # Asynchronously start entering into the database
-        #pool.enterdataintodatabase
+        # Asynchronously call to save the data to allow the reply text message to be sent immediately
+        mp.Pool().apply_async(database.save_contribution, (station, water_height, phone_number))
     else:
         resp.message("Whoopsies! We couldn't read your measurement properly.\n Format: 'NY1000 2.5'")
 
@@ -38,18 +41,23 @@ def parse_sms(message):
 
     message_list = message.split(" ")
 
+    # Check if the message has at least a station and one measurement
     if len(message_list) < 2:
-        return False
+        return False, None, None
 
     # Check if the station string does not contain a state abbreviation
     if not any(state in message_list[0] for state in US_STATES):
-        return False
+        return False, None, None
+
+    # Check if the station string has at least 6 characters
+    if len(message_list[0]) < 6:
+        return False, None, None
 
     try:
         station = str(message_list[0])
         water_height = float(message_list[1])
     except:
-        return False
+        return False, None, None
 
     return True, station, water_height
 
