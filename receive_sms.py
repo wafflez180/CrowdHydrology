@@ -8,28 +8,29 @@ import multiprocessing as mp
 
 app = Flask(__name__)
 
+
 @app.route("/sms", methods=['GET','POST'])
 def incoming_sms():
     # Get the message the user sent our Twilio number
-    body = request.values.get('Body', None).upper()
+    message_body = request.values.get('Body', None).upper()
     phone_number = request.values.get('From', None)
 
     # Start our TwiML response
     resp = MessagingResponse()
 
-    is_valid, station, water_height = parse_sms(body)
+    is_valid, station_id, water_height = parse_sms(message_body)
 
     if is_valid:
         resp.message("Thanks for contributing to CrowdHydrology research and being a citizen-scientist!")
         # TODO: Maybe randomize a funny science joke after
 
         print("Recieved a valid sms")
-        print("\tSMS data:\n\t\tStation: ", station, "\n\t\tWater height: ", water_height)
-
-        # Asynchronously call to save the data to allow the reply text message to be sent immediately
-        mp.Pool().apply_async(database.save_contribution, (station, water_height, phone_number))
+        print("\tSMS data:\n\t\tStation: ", station_id, "\n\t\tWater height: ", water_height)
     else:
         resp.message("Whoopsies! We couldn't read your measurement properly.\n Format: 'NY1000 2.5'")
+
+    # Asynchronously call to save the data to allow the reply text message to be sent immediately
+    mp.Pool().apply_async(database.save_contribution, (is_valid, station_id, water_height, phone_number, message_body))
 
     return str(resp)
 
@@ -54,12 +55,12 @@ def parse_sms(message):
         return False, None, None
 
     try:
-        station = str(message_list[0])
+        station_id = str(message_list[0])
         water_height = float(message_list[1])
     except:
         return False, None, None
 
-    return True, station, water_height
+    return True, station_id, water_height
 
 # https://teamtreehouse.com/community/can-someone-help-me-understand-flaskname-a-little-better
 # Checks to see if this module was called interactively (script, command, etc)
