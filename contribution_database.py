@@ -3,7 +3,17 @@
 import sqlite3
 import uuid
 import datetime
+import graphs
 
+"""
+Functions to set up a database and save contributions to the database.
+
+@author Arthur De Araujo
+@contact adearauj@buffalo.edu
+@github github.com/wafflez180
+
+Created: 06/18/2018
+"""
 
 def save_contribution(is_valid, station_id, water_height, phone_number, message_body):
     create_database()
@@ -23,6 +33,9 @@ def save_contribution(is_valid, station_id, water_height, phone_number, message_
     # Save (commit) the database changes
     conn.commit()
     conn.close()
+
+    if is_valid:
+        graphs.generate()
 
 
 def create_database():

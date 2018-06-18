@@ -8,6 +8,15 @@ import multiprocessing as mp
 
 app = Flask(__name__)
 
+"""
+Functions to receive and parse sms.
+
+@author Arthur De Araujo
+@contact adearauj@buffalo.edu
+@github github.com/wafflez180
+
+Created: 06/18/2018
+"""
 
 @app.route("/sms", methods=['GET','POST'])
 def incoming_sms():
