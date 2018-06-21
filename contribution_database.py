@@ -34,6 +34,7 @@ def save_contribution(is_valid, station_id, water_height, phone_number, message_
     conn.commit()
     conn.close()
 
+    # ToDo: Consider executing graph generation less because it takes a lot of computation
     if is_valid:
         graphs.generate()
 

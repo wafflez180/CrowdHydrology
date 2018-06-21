@@ -61,9 +61,13 @@ for contributor_id, contribution_info in contributions_csv_dict.items():
     # Insert Invalid Contributions
     invalid_contribution_amount = contribution_info[2]
     for i in range(invalid_contribution_amount):
-        contribution_date = datetime.fromtimestamp(float(contribution_info[6][i]))
-        sql_values = (contributor_id, contribution_info[5][i], contribution_date)
-        cur.execute("INSERT INTO InvalidSMSContributions (ContributorID, MessageBody, DateReceived) VALUES (?,?,?)", sql_values)
+        try:
+            contribution_date = datetime.fromtimestamp(float(contribution_info[6][i]))
+            sql_values = (contributor_id, contribution_info[5][i], contribution_date)
+            cur.execute("INSERT INTO InvalidSMSContributions (ContributorID, MessageBody, DateReceived) VALUES (?,?,?)", sql_values)
+        except:
+            print("Float conversion error occurred, skipping to next invalid contribution.")
+            # Do nothing
 
 # Close database connection
 conn.commit()

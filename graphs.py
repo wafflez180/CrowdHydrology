@@ -27,18 +27,25 @@ def generate():
     cursor = conn.cursor()
 
     plotly.tools.set_credentials_file(username='wafflez180', api_key='v2ub8wWESL46Q3y0B9wA')
+    print("Generating graphs...")
     generate_contribution_amount_pie_chart(cursor)
     generate_user_station_contrib_bar_graph(cursor)
     generate_contribution_dates_line_graph(cursor)
+    print("Graph generation complete.")
 
     # Close database connection
     conn.close()
 
 
 def generate_contribution_amount_pie_chart(cursor):
+    print("\tGenerating contribution amount pie chart...")
+
     # Get a list of total contributions sent per contributor
-    cursor.execute('SELECT ContributorID, count(*) FROM SMSContributions GROUP BY ContributorID')
+    arduino_contributor_id = 'c54fffe2-2870-3b16-8d3c-fc0e65d5e946'
+    cursor.execute('SELECT ContributorID, count(*) FROM SMSContributions WHERE ContributorID != ? GROUP BY ContributorID', (arduino_contributor_id,))
     total_contributions_per_contributor_list = cursor.fetchall()
+
+    print("\t\tFetched total contributions")
 
     #print(total_contributions_per_contributor_list)
 
@@ -58,12 +65,13 @@ def generate_contribution_amount_pie_chart(cursor):
             values.append(num_of_contributors_per_contribution_amount_list[i])
 
     if labels:
-        print("Successfully graphed : Contributions Per Contributor Pie Graph")
         trace = go.Pie(labels=labels, values=values, hole=.2,textposition='outside')
         py.plot([trace], filename='number_of_contributors_per_contribution_amount_list', auto_open=False)
+        print("\tSuccessfully graphed : Contributions Per Contributor Pie Graph")
 
 
 def generate_user_station_contrib_bar_graph(cursor):
+    print("\tGenerating user station contribution bar graph...")
 
     plotly_traces = []
 
@@ -93,9 +101,9 @@ def generate_user_station_contrib_bar_graph(cursor):
     )
 
     if plotly_traces:
-        print("Successfully graphed : Contributions Stations Bar Graph")
         fig = go.Figure(data=plotly_traces, layout=layout)
         py.plot(fig, filename='contributions_per_station', auto_open=False)
+        print("\tSuccessfully graphed : Contributions Stations Bar Graph")
 
 # Fills dates having 0 amount of texts in between date1 and date2
 def fill_dates_between(date1, date2, date_list, text_amount_list):
@@ -116,6 +124,7 @@ def fill_dates_between(date1, date2, date_list, text_amount_list):
 
 
 def generate_contribution_dates_line_graph(cursor):
+    print("\tGenerating contribution dates line graph...")
 
     state_dates_dict = dict()
 
@@ -125,7 +134,8 @@ def generate_contribution_dates_line_graph(cursor):
 
     for state in states:
         #print(state[0])
-        cursor.execute('SELECT DateReceived FROM SMSContributions WHERE State=? ORDER BY DateReceived',(state[0], ))
+        arduino_contributor_id = 'c54fffe2-2870-3b16-8d3c-fc0e65d5e946'
+        cursor.execute('SELECT DateReceived FROM SMSContributions WHERE State=? AND ContributorID != ? ORDER BY DateReceived',(state[0], arduino_contributor_id))
         contribution_dates = cursor.fetchall()
         #print(contribution_dates)
         state_dates_dict[state[0]] = contribution_dates
@@ -137,12 +147,12 @@ def generate_contribution_dates_line_graph(cursor):
         contribution_date_list = []
         contribution_amount_list = []
 
-        prev_date = datetime.datetime.strptime(dates[0][0], '%Y-%m-%d %H:%M:%S.%f').replace(hour=0, minute=0, second=0, microsecond=0)
+        prev_date = (datetime.datetime.strptime(dates[0][0], '%Y-%m-%d %H:%M:%S')).replace(hour=0, minute=0, second=0, microsecond=0)
         contribution_date_list.append(prev_date)
         contribution_amount_list.append(0)
 
         for date in dates:
-            date = datetime.datetime.strptime(date[0], '%Y-%m-%d %H:%M:%S.%f').replace(hour=0, minute=0, second=0, microsecond=0)
+            date = datetime.datetime.strptime(date[0], '%Y-%m-%d %H:%M:%S').replace(hour=0, minute=0, second=0, microsecond=0)
             if date > prev_date:
                 fill_dates_between(prev_date, date, contribution_date_list, contribution_amount_list)
 
@@ -157,11 +167,14 @@ def generate_contribution_dates_line_graph(cursor):
         plotly_traces.append(go.Scatter(
             x=contribution_date_list,
             y=contribution_amount_list,
-            mode='lines+markers',
+            mode='lines',
             name=state
         ))
 
+        print("\t\tTraced: ", state)
+
     if plotly_traces:
-        print("Successfully graphed : Contribution Date Line Graph")
         py.plot(plotly_traces, filename='contribution_dates', auto_open=False)
+        print("\tSuccessfully graphed : Contribution Date Line Graph")
+
 
