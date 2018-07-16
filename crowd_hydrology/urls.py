@@ -18,8 +18,6 @@ from django.urls import path, include
 from main_app import views, receive_sms
 
 urlpatterns = [
-    path('', views.index, name='index'),
     path('admin/', admin.site.urls),
-    path('main_app/', include('main_app.urls')),
-    path('sms/', receive_sms.incoming_sms, name='sms')
+    path('', include('main_app.urls'))
 ]

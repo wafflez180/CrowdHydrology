@@ -7,19 +7,17 @@
   </head>
   <body>
     <nav class="navbar navbar-default navbar-static-top">
-      <!--<div class="container">
+      <div class="container">
         <ul class="nav navbar-nav">
-          <li><a class="navbar-brand" href="{url 'index'}">DJANGO</a></li>
-          <li><a class="navbar-link" href="{% url 'admin:index' %}">Admin</a></li>
-          <li><a class="navbar-link" href="{% url 'basic_app:register' %}">Register</a></li>
 
           {% if user.is_authenticated %}
-            <li><a class="navbar-link" href="{% url 'logout' %}">Logout</a></li>
+          <li><a class="navbar-link" href="{% url 'main_app:index' %}">Home</a></li>
+          <li><a class="navbar-link" href="{% url 'admin:index' %}">Admin</a></li>
           {% else %}
-            <li><a class="navbar-link" href="{% url 'basic_app:user_login' %}">Login</a></li>
+
           {% endif %}
         </ul>
-      </div>-->
+      </div>
     </nav>
 
     <div class="container">
