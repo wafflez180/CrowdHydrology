@@ -102,3 +102,24 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+*.sqlite
+*.sqlite3
+*.csv
+main_app/migrations/0001_initial.py
+main_app/migrations/0002_auto_20180710_1434.py
+main_app/migrations/0003_auto_20180710_1519.py
+main_app/migrations/0004_auto_20180711_1422.py
+main_app/migrations/0005_auto_20180711_1441.py
+main_app/migrations/0006_station_state.py
+main_app/migrations/0007_auto_20180711_1739.py
+main_app/migrations/0008_auto_20180711_1741.py
+main_app/migrations/0009_auto_20180711_2011.py
+main_app/migrations/0010_auto_20180711_2014.py
+main_app/migrations/0011_auto_20180716_1515.py
+main_app/migrations/0012_remove_smscontribution_state.py
+main_app/migrations/0013_auto_20180716_1149.py
+main_app/migrations/0014_auto_20180716_1151.py
+*.jpg
+*.png
+*.jpeg
+crowd_hydrology/settings.py
