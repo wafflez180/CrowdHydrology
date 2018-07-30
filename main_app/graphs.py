@@ -9,6 +9,10 @@ import csv
 import datetime
 import sqlite3
 import time
+import sys
+from tqdm import tqdm
+import pygal
+from main_app.models import SMSContribution, InvalidSMSContribution, Station
 
 """
 Functions to create graphs derived from data located in the CSV files.
@@ -19,23 +23,6 @@ Functions to create graphs derived from data located in the CSV files.
 
 Created: 06/18/2018
 """
-
-
-def generate():
-    # Connect to database
-    conn = sqlite3.connect('crowdhydrology_db.sqlite')
-    cursor = conn.cursor()
-
-    plotly.tools.set_credentials_file(username='yourUsername', api_key='yourAPIKey')
-    print("Generating graphs...")
-    generate_contribution_amount_pie_chart(cursor)
-    generate_station_contrib_bar_graph(cursor)
-    generate_contribution_dates_line_graph(cursor)
-    print("Graph generation complete.")
-
-    # Close database connection
-    conn.close()
-
 
 def generate_contribution_amount_pie_chart(cursor):
     print("\tGenerating contribution amount pie chart...")
@@ -59,7 +46,7 @@ def generate_contribution_amount_pie_chart(cursor):
     # Add the graph label and value for each contribution amount
     labels = []
     values = []
-    for i in range(len(num_of_contributors_per_contribution_amount_list)):
+    for i in tqdm(range(len(num_of_contributors_per_contribution_amount_list))):
         if num_of_contributors_per_contribution_amount_list[i] != 0:
             labels.append(str(i) + " texts")
             values.append(num_of_contributors_per_contribution_amount_list[i])
@@ -79,17 +66,38 @@ def generate_station_contrib_bar_graph(cursor):
     cursor.execute("SELECT DISTINCT ContributorID FROM SMSContributions")
     contributor_ids = cursor.fetchall()
 
+    contrib_id_len = len(contributor_ids)
+
+    station_contrib_file = open('./static/stats/station_contribution_dict.csv','w')
+    station_contrib_file.write('contributor, station, sms_amount\n')
+
+    # Uncomment lines containing contrib_per_person_file or contrib_per_station_file
+    # to get contrib per person csv and contrib per station csv
+    contrib_per_person_file = open('../static/stats/contrib_per_person_file.csv','w')
+    contrib_per_person_file.write('contributor, contribution_amount\n')
+    contrib_per_station_file = open('../static/stats/contrib_per_station_file.csv','w')
+    contrib_per_station_file.write('station, contribution_amount\n')
+
+    contrib_per_station_dict = {}
+
     # For each contributor, get the amount of their contributions per station
-    for contributor_id in contributor_ids:
+    for contributor_id in tqdm(contributor_ids):
         #print(contributor_id[0])
         cursor.execute("SELECT DISTINCT StationID FROM SMSContributions WHERE ContributorID=(?)", (contributor_id[0],))
         stations = cursor.fetchall()
 
         station_contribution_dict = {}
+        total_contributions = 0
         for station in stations:
             cursor.execute("SELECT count(*) FROM SMSContributions WHERE ContributorID=? AND StationID=?", (contributor_id[0],station[0],))
             station_contributions_amount = cursor.fetchall()[0]
             station_contribution_dict[station[0]] = station_contributions_amount[0]
+            total_contributions+=station_contributions_amount[0]
+
+            if station in contrib_per_station_dict:
+                contrib_per_station_dict[station] += station_contributions_amount[0]
+            else:
+                contrib_per_station_dict[station] = station_contributions_amount[0]
         #print(station_contribution_dict)
 
         plotly_traces.append(go.Bar(
@@ -97,14 +105,26 @@ def generate_station_contrib_bar_graph(cursor):
             y=list(station_contribution_dict.values()),
             name=contributor_id[0]))
 
+        for key, value in station_contribution_dict.items():
+            station_contrib_file.write( str( contributor_id[0] ) + ',' + str( key ) + ',' + str( value ) + '\n' )
+
+        contrib_per_person_file.write( str( contributor_id[0] ) + ',' + str( total_contributions )  + '\n' )
+
+    for station, contrib_amount in contrib_per_station_dict.items():
+        contrib_per_station_file.write( str(station).replace("\'", "").replace("(", "").replace(")", "") + str( contrib_amount ) + '\n' )
+
     layout = go.Layout(
         barmode='stack'
     )
 
+    contrib_per_person_file.close()
+    contrib_per_station_file.close()
+    station_contrib_file.close()
+
     if plotly_traces:
         print("\t\tSending data to plotly...")
-        fig = go.Figure(data=plotly_traces, layout=layout)
-        py.plot(fig, filename='contributions_per_station_2.0', auto_open=False)
+        #fig = go.Figure(data=plotly_traces, layout=layout)
+        #py.plot(fig, filename='july_12_contributions_per_station', auto_open=False)
         print("\tSuccessfully graphed : Contributions Stations Bar Graph")
 
 # Fills dates having 0 amount of texts in between date1 and date2
@@ -144,8 +164,9 @@ def generate_contribution_dates_line_graph(cursor):
 
     plotly_traces = []
 
+    state_dict_len = len(state_dates_dict.items())
     # For each state, go through each contribution date and calculate the number of contributions on that day
-    for state, dates in state_dates_dict.items():
+    for state, dates in tqdm(state_dates_dict.items()):
         contribution_date_list = []
         contribution_amount_list = []
 
@@ -179,3 +200,25 @@ def generate_contribution_dates_line_graph(cursor):
         print("\t\tSending data to plotly...")
         py.plot(plotly_traces, filename='contribution_dates', auto_open=False)
         print("\tSuccessfully graphed : Contribution Date Line Graph")
+
+def generate(request):
+    # Connect to database
+    # CHANGE FILE AFTER DATA MIGRATION
+    conn = sqlite3.connect('old_crowdhydrology_db.sqlite')
+    cursor = conn.cursor()
+
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    print(dir_path)
+
+    plotly.tools.set_credentials_file(username='wafflez180', api_key='v2ub8wWESL46Q3y0B9wA')
+    print("Generating graphs...")
+    #generate_contribution_amount_pie_chart(cursor)
+    generate_station_contrib_bar_graph(cursor)
+    #generate_contribution_dates_line_graph(cursor)
+    print("Graph generation complete.")
+
+    # Close database connection
+    conn.close()
+
+if __name__ == "__main__":
+    generate()

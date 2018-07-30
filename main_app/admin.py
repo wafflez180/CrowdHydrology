@@ -16,7 +16,7 @@ class StationAdmin(admin.ModelAdmin):
     search_fields = ['id', 'name', 'state']
     list_filter = ['status', 'water_body_type', 'state']
     list_display = ['id', 'name', 'state', 'water_body_type', 'status', 'date_added']
-    #list_editable = ['status']
+    list_editable = ['status']
 
 class SponsorAdmin(admin.ModelAdmin):
     search_fields = ['name']

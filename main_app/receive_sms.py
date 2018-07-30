@@ -3,7 +3,8 @@
 import os
 from django_twilio.decorators import twilio_view
 from twilio.twiml.messaging_response import MessagingResponse
-from main_app import contribution_database as database
+from main_app import contribution_database as database, graphs
+from main_app import crowdhydrology_website_database as website_database
 import multiprocessing as mp
 
 """
@@ -38,6 +39,9 @@ def incoming_sms(request):
 
     # Asynchronously call to save the data to allow the reply text message to be sent immediately
     mp.Pool().apply_async(database.save_contribution, (is_valid, station_id, water_height, phone_number, message_body))
+
+    # Replace with a cron script that refreshes the database at 4am everyday
+    #mp.Pool().apply_async(website_database.save_contributions_to_csv)
 
     return str(resp)
 

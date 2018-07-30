@@ -43,7 +43,7 @@ else:
     print("Error: Couldn't find contributionTotals.csv.")
 
 # Connect to database
-conn = sqlite3.connect('crowdhydrology_db.sqlite')
+conn = sqlite3.connect('old_crowdhydrology_db.sqlite')
 cur = conn.cursor()
 
 for contributor_id, contribution_info in contributions_csv_dict.items():
