@@ -3,6 +3,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.decorators import login_required
 import os
 from django.conf import settings
+#from main_app import data_migrate_part_2_from_old_to_new
 
 # Create your views here.
 @login_required

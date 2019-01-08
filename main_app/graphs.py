@@ -12,7 +12,6 @@ import time
 import sys
 from tqdm import tqdm
 import pygal
-from main_app.models import SMSContribution, InvalidSMSContribution, Station
 
 """
 Functions to create graphs derived from data located in the CSV files.
@@ -68,7 +67,7 @@ def generate_station_contrib_bar_graph(cursor):
 
     contrib_id_len = len(contributor_ids)
 
-    station_contrib_file = open('./static/stats/station_contribution_dict.csv','w')
+    station_contrib_file = open('../static/stats/station_contribution_dict.csv','w')
     station_contrib_file.write('contributor, station, sms_amount\n')
 
     # Uncomment lines containing contrib_per_person_file or contrib_per_station_file
@@ -201,7 +200,7 @@ def generate_contribution_dates_line_graph(cursor):
         py.plot(plotly_traces, filename='contribution_dates', auto_open=False)
         print("\tSuccessfully graphed : Contribution Date Line Graph")
 
-def generate(request):
+def generate():
     # Connect to database
     # CHANGE FILE AFTER DATA MIGRATION
     conn = sqlite3.connect('old_crowdhydrology_db.sqlite')
@@ -212,9 +211,9 @@ def generate(request):
 
     plotly.tools.set_credentials_file(username='wafflez180', api_key='v2ub8wWESL46Q3y0B9wA')
     print("Generating graphs...")
-    #generate_contribution_amount_pie_chart(cursor)
+    generate_contribution_amount_pie_chart(cursor)
     generate_station_contrib_bar_graph(cursor)
-    #generate_contribution_dates_line_graph(cursor)
+    generate_contribution_dates_line_graph(cursor)
     print("Graph generation complete.")
 
     # Close database connection

@@ -15,14 +15,14 @@ Functions to set up a database and save contributions to the database.
 Created: 06/18/2018
 """
 
-def save_contribution(is_valid, station_id, water_height, phone_number, message_body):
+def save_contribution(is_valid, station_id, water_height, temperature, phone_number, message_body):
     hashed_phone_number = str(uuid.uuid3(uuid.NAMESPACE_OID, phone_number[-10:]))
 
     if is_valid:
         station = Station.objects.get(id=station_id)
         new_contributon = SMSContribution(contributor_id=hashed_phone_number, station=station,
                                           water_height=float(water_height),
-                                          temperature=None, date_received=timezone.localtime())
+                                          temperature=temperature, date_received=timezone.localtime())
         new_contributon.save()
     else:
         new_invalid_contribution = InvalidSMSContribution(contributor_id=hashed_phone_number, message_body=message_body,

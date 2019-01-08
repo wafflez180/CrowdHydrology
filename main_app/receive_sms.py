@@ -5,6 +5,7 @@ from django_twilio.decorators import twilio_view
 from twilio.twiml.messaging_response import MessagingResponse
 from main_app import contribution_database as database, graphs
 from main_app import crowdhydrology_website_database as website_database
+from main_app.models import Station
 import multiprocessing as mp
 
 """
@@ -23,25 +24,27 @@ def incoming_sms(request):
     message_body = request.POST.get('Body', None).upper()
     phone_number = request.POST.get('From', None)
 
-    is_valid, station_id, water_height = parse_sms(message_body)
+    is_valid, station_id, water_height, temperature, error_msg = parse_sms(message_body)
 
     # Start our TwiML response
     resp = MessagingResponse()
 
     if is_valid:
-        resp.message("Thanks for contributing to CrowdHydrology research and being a citizen-scientist!")
+        reply_msg = "Thanks for contributing to CrowdHydrology research and being a citizen scientist!"
+        reply_msg += "\n\nCheck out the contributions at your station: http://crowdhydrology.com/charts/" + station_id + "_dygraph.html"
+        resp.message(reply_msg)
         # TODO: Maybe randomize a funny science joke after
 
         print("Recieved a valid sms")
         print("\tSMS data:\n\t\tStation: ", station_id, "\n\t\tWater height: ", water_height)
     else:
-        resp.message("Whoopsies! We couldn't read your measurement properly.\n Format: 'NY1000 2.5'")
+        resp.message(error_msg)
 
     # Asynchronously call to save the data to allow the reply text message to be sent immediately
-    mp.Pool().apply_async(database.save_contribution, (is_valid, station_id, water_height, phone_number, message_body))
+    mp.Pool().apply_async(database.save_contribution, (is_valid, station_id, water_height, temperature, phone_number, message_body))
 
     # Replace with a cron script that refreshes the database at 4am everyday
-    #mp.Pool().apply_async(website_database.save_contributions_to_csv)
+    mp.Pool().apply_async(website_database.save_contributions_to_csv)
 
     return str(resp)
 
@@ -51,24 +54,65 @@ def parse_sms(message):
                  'LA', 'MA', 'MD', 'ME', 'MI', 'MN', 'MO', 'MS', 'MT', 'NC', 'ND', 'NE', 'NH', 'NJ', 'NM', 'NV', 'NY',
                  'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VA', 'VT', 'WA', 'WI', 'WV', 'WY']
 
-    message_list = message.split(" ")
+    temperature = None
+    error_msg = "Whoopsies! We couldn't read your measurement properly.\n Format: 'NY1000 2.5'"
+
+    message_list = message.strip().split(" ")
 
     # Check if the message has at least a station and one measurement
     if len(message_list) < 2:
-        return False, None, None
+        return False, None, None, None, error_msg
 
     # Check if the station string does not contain a state abbreviation
-    if not any(state in message_list[0] for state in US_STATES):
-        return False, None, None
+    if not any(state in message for state in US_STATES):
+        return False, None, None, None, error_msg
 
-    # Check if the station string has at least 6 characters
-    if len(message_list[0]) < 6:
-        return False, None, None
-
+    # Get the station_id, remove it from the message and then parse the rest
     try:
-        station_id = str(message_list[0])
-        water_height = float(message_list[1])
+        station_id = ""
+        for state in US_STATES:
+            state_abreviation_loc = message.find(state)
+            if state_abreviation_loc != -1:
+                station_id = message[state_abreviation_loc : state_abreviation_loc+6]
+                # Handle case when message has a space in between the state and id = "NY 1000"
+                if hasWhiteSpace(station_id):
+                    station_id = message[state_abreviation_loc : state_abreviation_loc+7]
+                message = message.replace(station_id, "").strip()
+                station_id = station_id.replace(" ", "")
     except:
-        return False, None, None
+        return False, None, None, None, error_msg
 
-    return True, station_id, water_height
+    # Check if the station exists
+    try:
+        print(station_id)
+        station = Station.objects.get(id=station_id)
+    except Station.DoesNotExist:
+        return False, None, None, None, "Whoopsies! We couldn't find a station with that ID.\n Format: 'NY1000 2.5'"
+
+    # Parse the measurements, if there are 2 then figure out which is temperature and water height
+    try:
+        message_measurements_list = message.split()
+        # Only one measurement sent
+        if len(message_measurements_list) == 1:
+            water_height = float(message)
+        else:
+            # Check which of the 2 measurements is below 32.0, temperature doesn't go below 32.0
+            if float(message_measurements_list[0]) <= 32.0:
+                water_height = float(message_measurements_list[0])
+                temperature = float(message_measurements_list[1])
+            else:
+                water_height = float(message_measurements_list[1])
+                temperature = float(message_measurements_list[0])
+    except:
+        return False, None, None, None, error_msg
+
+    if temperature and (temperature >= 150.0 or temperature <= 32.0):
+        return False, None, None, None, "Whoopsies! That temperature measurement is out of bounds!\n\n Please re-submit with a valid temperature measurement. \n Format: 'NY1000 2.5 80.0'"
+
+    if water_height > station.upper_bound or water_height < station.lower_bound:
+        return False, None, None, None, "Whoopsies! That water height measurement is out of bounds!\n\n Please re-submit with a valid water height measurement. \n Format: 'NY1000 2.5'"
+
+    return True, station_id, water_height, temperature, error_msg
+
+def hasWhiteSpace(s):
+  return s.find(' ') >= 0;

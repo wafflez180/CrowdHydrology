@@ -68,6 +68,9 @@ class SMSContribution(models.Model):
     temperature = models.FloatField(null=True, blank=True, default=None)
     date_received = models.DateTimeField()
 
+    class Meta:
+            unique_together = ["contributor_id", "station", "water_height", "temperature", "date_received"]
+
     def __str__(self):
         return "{} : w={} t={} ({})".format(self.station_id, self.water_height, self.temperature, timezone.localtime(self.date_received).strftime('%D %H:%M:%S'))
 
@@ -75,6 +78,9 @@ class InvalidSMSContribution(models.Model):
     contributor_id = models.UUIDField()
     message_body = models.CharField(max_length=300)
     date_received = models.DateTimeField()
+
+    class Meta:
+            unique_together = ["contributor_id", "message_body", "date_received"]
 
     def __str__(self):
         return "{} ({})".format(self.message_body, timezone.localtime(self.date_received).strftime('%D %H:%M:%S'))

@@ -25,6 +25,8 @@ if os.path.exists('contributionTotals.csv'):
     firstrow = True
     for user in totalreader:
         if not firstrow:
+            #print(len(user))
+            #print(user)
             contribution_dict_str = user[4].replace("-", ",").replace("\'", "\"")
             contribution_date_dict_str = user[5].replace("-", ",").replace("\'", "\"")
             bad_contribution_list = user[6].replace("-", ",").replace("\'", "").replace("[", "").replace("]", "").split(
@@ -46,8 +48,11 @@ else:
 conn = sqlite3.connect('old_crowdhydrology_db.sqlite')
 cur = conn.cursor()
 
+cur.execute("""CREATE TABLE IF NOT EXISTS SMSContributions (ContributorID text, StationID text,State text, WaterHeight float, Temperature float, DateReceived text)""");
+cur.execute("""CREATE TABLE IF NOT EXISTS InvalidSMSContributions (ContributorID text, MessageBody text, DateReceived text)""");
+
 for contributor_id, contribution_info in contributions_csv_dict.items():
-    print(contributor_id)
+    #print(contributor_id)
 
     # Insert Valid Contributions
     station_contrib_amount_dict = contribution_info[3]
@@ -55,6 +60,7 @@ for contributor_id, contribution_info in contributions_csv_dict.items():
         for i in range(contribution_amount):
             contribution_date = datetime.fromtimestamp(int(contribution_info[4][station_id][i]))
             sql_values = (contributor_id, station_id, station_id[:2], contribution_info[7][station_id][i], None, contribution_date)
+
             cur.execute("INSERT INTO SMSContributions (ContributorID, StationID, State, WaterHeight, Temperature, DateReceived) VALUES (?,?,?,?,?,?)",
                         sql_values)
 

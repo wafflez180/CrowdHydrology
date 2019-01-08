@@ -13,7 +13,8 @@ def save_contributions_to_csv():
     for station in station_list:
         contribution_list = SMSContribution.objects.filter(station=station)
 
-        with open('data/' + station.id.upper() + '.csv', 'w') as csv_file:
+
+        with open('../../crowdhydrology_driver/data/' + station.id.upper() + '.csv', 'w') as csv_file:
             writer = csv.writer(csv_file, delimiter=",")
             writer.writerow(['Date and Time', 'Gage Height (ft)', 'POSIX Stamp'])
             for contribution in contribution_list:
