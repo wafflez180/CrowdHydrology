@@ -17,6 +17,6 @@ I followed the ['How To Serve Django Applications with Apache and mod_wsgi on Ub
 
 Contact Dave Yearke at yearke@buffalo.edu if you need admin / UB server technical support, he is very familiar with the CrowdHydrology work.<br><br>
 
-### Please view the poster below to help understand the CrowdHydrology project and the flow of data<br><br>
+### Please view the poster below to help your understanding of the CrowdHydrology project and the flow of data<br><br>
 
-<img src="/readme-pics/research-poser.png" alt="CrowdHydrology Research Poster" width="300"/>
+<img src="/readme-pics/research-poster.png" alt="CrowdHydrology Research Poster" width="850"/>
