@@ -119,7 +119,7 @@ main_app/migrations/0011_auto_20180716_1515.py
 main_app/migrations/0012_remove_smscontribution_state.py
 main_app/migrations/0013_auto_20180716_1149.py
 main_app/migrations/0014_auto_20180716_1151.py
-*.jpg
-*.png
-*.jpeg
+#*.jpg
+#*.png
+#*.jpeg
 crowd_hydrology/settings.py
