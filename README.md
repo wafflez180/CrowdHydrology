@@ -5,7 +5,10 @@ __Front-end website URL:__ crowdhydrology.geology.buffalo.edu<br>
 
 ## Important Server Information for Future Developers
 
-`ssh user@crowdhydrology.geology.buffalo.edu`<br>
+`ssh user@crowdhydrology.geology.buffalo.edu`<br><br>
+
+To restart the Django server do: <br>`touch /htdocs/www/crowdhydrology_django_backend/crowd_hydrology/crowd_hydrology/wsgi.py` <br><br>
+To restart the apache service do (necessary after editing the django.config file):<br>`sudo service httpd restart` - contact UB Admin Dave Yearke to perform this command for you. <br><br>
 
 __UB Server URL:__ crowdhydrology.geology.buffalo.edu<br>
 __Django backend website URL:__ http://crowdhydrology.geology.buffalo.edu:8020/admin<br>
